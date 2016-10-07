@@ -771,7 +771,7 @@ double CIWavefunction::oneparticlematrix_element(SlaterDeterminant* I, SlaterDet
             printf("2 * ");
             #endif
 
-            val-=0;
+            val+=0;
 //            val += 2.0 * get_twoel(i,i,j,j);
 
             #ifdef PRINT_INTS
@@ -1063,7 +1063,8 @@ double CIWavefunction::twoparticlematrix_element(SlaterDeterminant* I, SlaterDet
       i = I_diff_[diffspin][0];
       j = J_diff_[diffspin][0];
 
-      val = get_onel(i,j);
+      val=0;
+//      val = get_onel(i,j);
 
       #ifdef PRINT_INTS
       if (sign % 2)

@@ -110,6 +110,7 @@ void CIWavefunction::diag_h() {
         SharedVector evals_v(new Vector("CI Eigenvalues", (size_t)size));
 
 
+
         H->diagonalize(evecs, evals_v, ascending);
         
         if (Parameters_->print_lvl > 4 && size < 200) {
@@ -120,32 +121,66 @@ void CIWavefunction::diag_h() {
             outfile->Printf("\nCI Eigenvectors:\n");
             evecs->print();
         }
+        //outfile->Printf("\nHamiltonian matrix:\n");
+        //H->print();
+
+//        evecs->get_column(0,0)->print();
 
         SharedVector psi0(new Vector("ground state", (size_t)size));
-        psi0=evecs->get_row(0,0);
+        psi0=evecs->get_column(0,0);
         SharedVector Hpsi0(new Vector("ground state", (size_t)size));
 
-        Hpsi0=evecs->get_row(0,0);
-        Hpsi0->gemv(false,1.0,H.get(),Hpsi0.get(),0.0);
+        Hpsi0=evecs->get_column(0,0);
+        double* psi0p = psi0->pointer();
+        double* Hpsi0p = Hpsi0->pointer();
+        double** Hp = H->pointer();
+        for(i=0;i<size;i++)
+        {
+          Hpsi0p[i]=0;
+          for(j=0;j<size;j++)Hpsi0p[i]+=Hp[i][j]*psi0p[j];
+        }
+        
+        //psi0->print();
+        //Hpsi0->print();
+
         outfile->Printf("\n\n* <psi0|H|psi0> = %17.13lf\n",
                                 psi0->dot(Hpsi0.get()));
+        outfile->Printf("\n\n* <psi0|H|psi0>+Enuc = %17.13lf\n",
+                                psi0->dot(Hpsi0.get())+nucrep);
         
         SharedMatrix oneparticleH = oneparticlehamiltonian();
-        outfile->Printf("\none-particle Hamiltonian matrix:\n");
-//        oneparticleH->print();
-        Hpsi0=evecs->get_row(0,0);
-        Hpsi0->gemv(false,1.0,oneparticleH.get(),Hpsi0.get(),0.0);
+        //outfile->Printf("\none-particle Hamiltonian matrix:\n");
+        //oneparticleH->print();
+        
+        double** oneHp = oneparticleH->pointer();
+        for(i=0;i<size;i++)
+        {
+          Hpsi0p[i]=0;
+          for(j=0;j<size;j++)Hpsi0p[i]+=oneHp[i][j]*psi0p[j];
+        }
+        double Eone=psi0->dot(Hpsi0.get());
         outfile->Printf("\n\n* <psi0|oneparticleH|psi0> = %17.13lf\n",
-                                psi0->dot(Hpsi0.get()));
+                                Eone);
 
 
         SharedMatrix twoparticleH = twoparticlehamiltonian();
-        outfile->Printf("\ntwo-particle Hamiltonian matrix:\n");
-//        twoparticleH->print();
-        Hpsi0=evecs->get_row(0,0);
-        Hpsi0->gemv(false,1.0,twoparticleH.get(),Hpsi0.get(),0.0);
+        //outfile->Printf("\ntwo-particle Hamiltonian matrix:\n");
+        //twoparticleH->print();
+        double** twoHp = twoparticleH->pointer();
+        for(i=0;i<size;i++)
+        {
+          Hpsi0p[i]=0;
+          for(j=0;j<size;j++)Hpsi0p[i]+=twoHp[i][j]*psi0p[j];
+        }
         outfile->Printf("\n\n* <psi0|twoparticleH|psi0> = %17.13lf\n",
                                 psi0->dot(Hpsi0.get()));
+        double Etwo=psi0->dot(Hpsi0.get());
+        
+        
+        outfile->Printf("\n\n* <psi0|oneparticleH+twoparticleH|psi0> = %17.13lf\n",
+                                Eone+Etwo);
+        outfile->Printf("\n\n* <psi0|oneparticleH+twoparticleH+Enuc|psi0> = %17.13lf\n",
+                                Eone+Etwo+nucrep);
 
         // Write evecs to Dvec
         evals = init_array(nroots);
