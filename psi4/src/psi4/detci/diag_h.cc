@@ -109,12 +109,43 @@ void CIWavefunction::diag_h() {
         SharedMatrix evecs(new Matrix("CI Eigenvectors", (size_t)size, (size_t)size));
         SharedVector evals_v(new Vector("CI Eigenvalues", (size_t)size));
 
+
+        H->diagonalize(evecs, evals_v, ascending);
+        
         if (Parameters_->print_lvl > 4 && size < 200) {
             outfile->Printf("\nHamiltonian matrix:\n");
             H->print();
+            outfile->Printf("\nCI Eigenvalues:\n");
+            evals_v->print();
+            outfile->Printf("\nCI Eigenvectors:\n");
+            evecs->print();
         }
 
-        H->diagonalize(evecs, evals_v, ascending);
+        SharedVector psi0(new Vector("ground state", (size_t)size));
+        psi0=evecs->get_row(0,0);
+        SharedVector Hpsi0(new Vector("ground state", (size_t)size));
+
+        Hpsi0=evecs->get_row(0,0);
+        Hpsi0->gemv(false,1.0,H.get(),Hpsi0.get(),0.0);
+        outfile->Printf("\n\n* <psi0|H|psi0> = %17.13lf\n",
+                                psi0->dot(Hpsi0.get()));
+        
+        SharedMatrix oneparticleH = oneparticlehamiltonian();
+        outfile->Printf("\none-particle Hamiltonian matrix:\n");
+//        oneparticleH->print();
+        Hpsi0=evecs->get_row(0,0);
+        Hpsi0->gemv(false,1.0,oneparticleH.get(),Hpsi0.get(),0.0);
+        outfile->Printf("\n\n* <psi0|oneparticleH|psi0> = %17.13lf\n",
+                                psi0->dot(Hpsi0.get()));
+
+
+        SharedMatrix twoparticleH = twoparticlehamiltonian();
+        outfile->Printf("\ntwo-particle Hamiltonian matrix:\n");
+//        twoparticleH->print();
+        Hpsi0=evecs->get_row(0,0);
+        Hpsi0->gemv(false,1.0,twoparticleH.get(),Hpsi0.get(),0.0);
+        outfile->Printf("\n\n* <psi0|twoparticleH|psi0> = %17.13lf\n",
+                                psi0->dot(Hpsi0.get()));
 
         // Write evecs to Dvec
         evals = init_array(nroots);

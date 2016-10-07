@@ -244,6 +244,8 @@ public:
      * @ return CI hamiltonian
      **/
     SharedMatrix hamiltonian(size_t hsize = 0);
+    SharedMatrix oneparticlehamiltonian(size_t hsize = 0);
+    SharedMatrix twoparticlehamiltonian(size_t hsize = 0);
 
 
 private:
@@ -334,6 +336,8 @@ private:
 
     /// => Slater Matrix Elements <= //
     double matrix_element(SlaterDeterminant* I, SlaterDeterminant* J);
+    double oneparticlematrix_element(SlaterDeterminant* I, SlaterDeterminant* J);
+    double twoparticlematrix_element(SlaterDeterminant* I, SlaterDeterminant* J);
     int sme_first_call_;
     int *same_alpha_, *same_beta_;
     int *common_docc_, *common_alp_socc_, *common_bet_socc_;
